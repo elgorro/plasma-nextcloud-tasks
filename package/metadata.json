@@ -1,0 +1,20 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "dev@witiko.de",
+                "Name": "elgorro"
+            }
+        ],
+        "Category": "Online Services",
+        "Description": "Display and manage Nextcloud tasks on your KDE Plasma desktop",
+        "Icon": "view-task",
+        "Id": "com.github.elgorro.nextcloud-tasks",
+        "Name": "Nextcloud Tasks",
+        "Version": "0.1.0",
+        "Website": "https://github.com/elgorro/plasma-nextcloud-tasks",
+        "BugReportUrl": "https://github.com/elgorro/plasma-nextcloud-tasks/issues"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "KPackageStructure": "Plasma/Applet"
+}
