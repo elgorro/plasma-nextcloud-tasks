@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            cmake \
+            extra-cmake-modules \
+            g++ \
+            gettext \
+            libkf6i18n-dev \
+            libplasma-dev \
+            qt6-base-dev \
+            qt6-declarative-dev \
+            qt6-declarative-private-dev
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --parallel $(nproc)
+
+      - name: Install
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: DESTDIR=${{ github.workspace }}/install cmake --build build --target install
+
+      - name: Create .plasmoid archive
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          PLASMOID_DIR="${{ github.workspace }}/install/usr/share/plasma/plasmoids/com.github.elgorro.nextcloud-tasks"
+          QML_DIR="${{ github.workspace }}/install/usr/lib/qml/com/github/elgorro/nextcloudtasks"
+
+          # Bundle the compiled plugin into the plasmoid
+          mkdir -p "$PLASMOID_DIR/contents/plugin"
+          cp "$QML_DIR"/libnextcloudtasksplugin.so "$PLASMOID_DIR/contents/plugin/"
+          cp "$QML_DIR"/nextcloudtaskspluginplugin.so "$PLASMOID_DIR/contents/plugin/" 2>/dev/null || true
+          cp "$QML_DIR"/qmldir "$PLASMOID_DIR/contents/plugin/"
+          cp "$QML_DIR"/nextcloudtasksplugin.qmltypes "$PLASMOID_DIR/contents/plugin/" 2>/dev/null || true
+
+          cd "$PLASMOID_DIR"
+          zip -r "${{ github.workspace }}/com.github.elgorro.nextcloud-tasks.plasmoid" .
+
+      - name: Create source tarball
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          VERSION=$(git rev-parse --short HEAD)
+          git archive --format=tar.gz --prefix=plasma-nextcloud-tasks-${VERSION}/ HEAD \
+            -o ${{ github.workspace }}/plasma-nextcloud-tasks-${VERSION}.tar.gz
+
+      - name: Upload .plasmoid artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: plasmoid
+          path: com.github.elgorro.nextcloud-tasks.plasmoid
+
+      - name: Upload source tarball artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-tarball
+          path: plasma-nextcloud-tasks-*.tar.gz

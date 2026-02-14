@@ -1,18 +1,35 @@
 import QtQuick
-import QtQuick.Layouts
 import org.kde.plasma.plasmoid
-import org.kde.plasma.components as PlasmaComponents
+import org.kde.plasma.core as PlasmaCore
+import com.github.elgorro.nextcloudtasks
 
 PlasmoidItem {
-    Plasmoid.fullRepresentation: Item {
-        Layout.minimumWidth: 300
-        Layout.minimumHeight: 200
-        Layout.preferredWidth: 400
-        Layout.preferredHeight: 300
+    id: root
 
-        PlasmaComponents.Label {
-            anchors.centerIn: parent
-            text: "Nextcloud Tasks"
+    Plasmoid.configurationRequired: Plasmoid.configuration.serverUrl === ""
+
+    Plasmoid.contextualActions: [
+        PlasmaCore.Action {
+            text: i18n("Refresh Tasks")
+            icon.name: "view-refresh"
+            onTriggered: taskModel.sync()
         }
+    ]
+
+    TaskModel {
+        id: taskModel
+        serverUrl: Plasmoid.configuration.serverUrl
+        username: Plasmoid.configuration.username
+        appPassword: Plasmoid.configuration.appPassword
+        syncIntervalMinutes: Plasmoid.configuration.syncIntervalMinutes
+        autoSync: Plasmoid.configuration.autoSync
+    }
+
+    compactRepresentation: CompactRepresentation {
+        taskModel: taskModel
+    }
+
+    fullRepresentation: FullRepresentation {
+        taskModel: taskModel
     }
 }
