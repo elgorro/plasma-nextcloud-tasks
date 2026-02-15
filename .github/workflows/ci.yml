@@ -8,24 +8,25 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
+    container: fedora:latest
 
     steps:
-      - uses: actions/checkout@v4
-
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
+          dnf install -y \
             cmake \
             extra-cmake-modules \
-            g++ \
-            gettext \
-            libkf6i18n-dev \
-            libplasma-dev \
-            qt6-base-dev \
-            qt6-declarative-dev \
-            qt6-declarative-private-dev
+            gcc-c++ \
+            gettext-devel \
+            git \
+            kf6-ki18n-devel \
+            libplasma-devel \
+            qt6-qtbase-devel \
+            qt6-qtdeclarative-devel \
+            zip
+
+      - uses: actions/checkout@v4
 
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
@@ -41,7 +42,7 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           PLASMOID_DIR="${{ github.workspace }}/install/usr/share/plasma/plasmoids/com.github.elgorro.nextcloud-tasks"
-          QML_DIR="${{ github.workspace }}/install/usr/lib/qml/com/github/elgorro/nextcloudtasks"
+          QML_DIR=$(find "${{ github.workspace }}/install" -type d -path "*/com/github/elgorro/nextcloudtasks" | head -1)
 
           # Bundle the compiled plugin into the plasmoid
           mkdir -p "$PLASMOID_DIR/contents/plugin"
